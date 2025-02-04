@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Weather App - Django</title>
+    <style>
+        :root {
+            --bg-color: white;
+            --text-color: black;
+            --card-bg: #f8f9fa;
+        }
+
+        .dark-mode {
+            --bg-color: #121212;
+            --text-color: white;
+            --card-bg: #1e1e1e;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: 0.3s;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+        }
+
+        .navbar {
+            transition: 0.3s;
+        }
+
+        .weather-image {
+            max-width: 200px;
+            height: auto;
+            margin: 10px auto;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a href="../" class="navbar-brand">Weather App <span class="text-primary"><strong>- Django
+                        Framework</strong></span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a href="https://openweathermap.org" class="nav-link text-light" target="_blank">OpenWeather
+                            API</a>
+                    </li>
+                </ul>
+                <button id="darkModeToggle" class="btn btn-outline-light ms-3">🌙 Dark Mode</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="jumbotron text-center bg-primary text-light py-5 mt-5">
+        <img src="{% static 'images/image.png' %}" alt="Weather Icon" class="weather-image">
+        <h1 class="display-5">Weather Desktop App</h1>
+        <h5>Using Python & Django Framework</h5>
+    </div>
+
+    <div class="container my-4">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary rounded">
+            <form method="post" class="w-100 d-flex justify-content-center">
+                {% csrf_token %}
+                <div class="input-group w-75">
+                    <input type="text" class="form-control form-control-lg" name="city"
+                        placeholder="Enter City Name...">
+                    <button type="submit" class="btn btn-light btn-lg">Search</button>
+                </div>
+            </form>
+            <button id="getLocationWeather" class="btn btn-warning ms-3">📍 Current Location Weather</button>
+        </nav>
+    </div>
+
+    <div class="container">
+        {% if country_code and coordinate and temp and pressure and humidity %}
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card bg-light shadow-sm">
+                    <div class="card-body text-center">
+                        <h4><strong>🌍 Country Code:</strong> {{ country_code }}</h4>
+                        <h4><strong>📍 Coordinates [Lon, Lat]:</strong> {{ coordinate }}</h4>
+                        <h4><strong>🌡️ Temperature:</strong> {{ temp }}°C</h4>
+                        <h4><strong>🌀 Pressure:</strong> {{ pressure }} hPa</h4>
+                        <h4><strong>💧 Humidity:</strong> {{ humidity }}%</h4>
+                        <h4><strong>🌤️ Forecast:</strong> {{ main }} <img
+                                src="http://openweathermap.org/img/w/{{ icon }}.png" alt="Weather Icon"
+                                style="width:50px;"></h4>
+                        <h4><strong>📝 Description:</strong> {{ description }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <footer class="bg-dark text-center text-light py-3 mt-5">
+        <p class="mb-0 small">© 2025 Weather App | Built with Django & OpenWeather API</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toggleBtn = document.getElementById("darkModeToggle");
+            const getLocationWeather = document.getElementById("getLocationWeather");
+            const body = document.body;
+
+            if (localStorage.getItem("dark-mode") === "enabled") {
+                body.classList.add("dark-mode");
+                toggleBtn.textContent = "☀️ Light Mode";
+            }
+
+            toggleBtn.addEventListener("click", function () {
+                body.classList.toggle("dark-mode");
+                if (body.classList.contains("dark-mode")) {
+                    localStorage.setItem("dark-mode", "enabled");
+                    toggleBtn.textContent = "☀️ Light Mode";
+                } else {
+                    localStorage.setItem("dark-mode", "disabled");
+                    toggleBtn.textContent = "🌙 Dark Mode";
+                }
+            });
+
+            getLocationWeather.addEventListener("click", function () {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        const { latitude, longitude } = position.coords;
+                        fetch(`/weather?lat=${latitude}&lon=${longitude}`)
+                            .then(response => response.text())
+                            .then(html => document.body.innerHTML = html)
+                            .catch(error => console.error("Error:", error));
+                    }, () => alert("Unable to retrieve your location."));
+                } else {
+                    alert("Geolocation is not supported by your browser.");
+                }
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
